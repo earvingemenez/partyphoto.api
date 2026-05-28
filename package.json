@@ -1,0 +1,17 @@
+{
+  "name": "party-photos",
+  "version": "1.0.0",
+  "description": "Shared photo wall with camera capture",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2"
+  }
+}

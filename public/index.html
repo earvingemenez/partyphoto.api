@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Party Photos</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="Photo wall">
+      <div id="wall" class="wall"></div>
+
+      <button
+        type="button"
+        id="openCamera"
+        class="fab"
+        aria-label="Open camera to add a photo"
+      >
+        <svg class="fab__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M9 4L7.17 6H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-3.17L15 4H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-2c1.65 0 3-1.35 3-3s-1.35-3-3-3-3 1.35-3 3 1.35 3 3 3z"
+          />
+        </svg>
+      </button>
+    </main>
+
+    <!-- Camera capture UI -->
+    <div
+      id="cameraModal"
+      class="modal modal--camera"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cameraTitle"
+    >
+      <div class="modal__panel">
+        <h2 id="cameraTitle" class="modal__title">Camera</h2>
+        <p id="cameraError" class="modal__error" hidden></p>
+        <div class="camera__stage">
+          <video
+            id="cameraVideo"
+            class="camera__video"
+            playsinline
+            muted
+            autoplay
+          ></video>
+          <canvas id="cameraCanvas" class="camera__canvas" hidden></canvas>
+        </div>
+        <div class="camera__actions">
+          <button type="button" id="btnCapture" class="btn btn--primary">
+            Capture
+          </button>
+          <button type="button" id="btnRetake" class="btn" hidden>
+            Retake
+          </button>
+          <button type="button" id="btnSave" class="btn btn--primary" hidden>
+            Save
+          </button>
+          <button type="button" id="btnCloseCamera" class="btn btn--ghost">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Photo viewer -->
+    <div
+      id="viewerModal"
+      class="modal modal--viewer"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="viewerTitle"
+    >
+      <div class="modal__panel modal__panel--viewer">
+        <h2 id="viewerTitle" class="visually-hidden">Photo</h2>
+        <button
+          type="button"
+          id="btnCloseViewer"
+          class="icon-btn icon-btn--close"
+          aria-label="Close"
+        >
+          ×
+        </button>
+        <img id="viewerImage" class="viewer__img" alt="" />
+        <div class="viewer__actions">
+          <a id="btnDownload" class="btn btn--primary" download href="#"
+            >Download</a
+          >
+          <button type="button" id="btnDelete" class="btn btn--danger">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

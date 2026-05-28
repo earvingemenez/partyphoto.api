@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Photo Board",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "8788", "/Users/restieantiquin/Documents/Loic/Party"],
+      "port": 8788
+    }
+  ]
+}

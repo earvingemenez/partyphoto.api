@@ -1,5 +1,6 @@
 .venv/
 __pycache__/
+node_modules/
 uploads/*
 !uploads/.gitkeep
 .DS_Store
