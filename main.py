@@ -1,8 +1,11 @@
+import asyncio
 import io
+import json
 import os
 import re
 import uuid
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -41,6 +44,42 @@ class CachedStaticFiles(StaticFiles):
 
 app = FastAPI(title="Party Photos API")
 app.mount("/uploads", CachedStaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+
+_subscribers: set[asyncio.Queue] = set()
+
+
+async def broadcast(event_type: str, payload: dict[str, Any]) -> None:
+    message = f"event: {event_type}\ndata: {json.dumps(payload)}\n\n"
+    for queue in list(_subscribers):
+        try:
+            queue.put_nowait(message)
+        except asyncio.QueueFull:
+            pass
+
+
+@app.get("/api/events")
+async def events():
+    queue: asyncio.Queue = asyncio.Queue(maxsize=64)
+    _subscribers.add(queue)
+
+    async def stream():
+        try:
+            yield ": connected\n\n"
+            while True:
+                try:
+                    message = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    yield message
+                except asyncio.TimeoutError:
+                    yield ": keepalive\n\n"
+        finally:
+            _subscribers.discard(queue)
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 def list_photos():
@@ -94,14 +133,13 @@ async def create_photo(photo: UploadFile = File(...)):
 
     stat = out_path.stat()
     created = getattr(stat, "st_birthtime", None) or stat.st_mtime
-    return JSONResponse(
-        status_code=201,
-        content={
-            "id": filename,
-            "url": f"/uploads/{filename}",
-            "createdAt": int(created * 1000),
-        },
-    )
+    photo = {
+        "id": filename,
+        "url": f"/uploads/{filename}",
+        "createdAt": int(created * 1000),
+    }
+    await broadcast("created", photo)
+    return JSONResponse(status_code=201, content=photo)
 
 
 @app.get("/api/photos/{photo_id}/download")
@@ -131,11 +169,12 @@ def download_photo(photo_id: str):
 
 
 @app.delete("/api/photos/{photo_id}", status_code=204)
-def delete_photo(photo_id: str):
+async def delete_photo(photo_id: str):
     if "/" in photo_id or ".." in photo_id or photo_id != os.path.basename(photo_id):
         raise HTTPException(status_code=400, detail="Invalid id")
     target = UPLOAD_DIR / photo_id
     if not target.exists():
         raise HTTPException(status_code=404, detail="Not found")
     target.unlink()
+    await broadcast("deleted", {"id": photo_id})
     return Response(status_code=204)
