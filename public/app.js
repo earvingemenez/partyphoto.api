@@ -322,9 +322,9 @@ function openViewer(photo) {
   viewerPhoto = photo;
   viewerImage.src = photo.url;
   viewerImage.alt = "Photo";
-  const base = photo.id.replace(/[^a-zA-Z0-9._-]/g, "_") || "photo.jpg";
-  btnDownload.href = photo.url;
-  btnDownload.download = base;
+  const stem = photo.id.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9._-]/g, "_") || "photo";
+  btnDownload.href = `/api/photos/${encodeURIComponent(photo.id)}/download`;
+  btnDownload.download = `${stem}.jpg`;
   showEl(viewerModal);
   document.body.style.overflow = "hidden";
 }
