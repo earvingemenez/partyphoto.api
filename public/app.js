@@ -256,7 +256,12 @@ function captureFrame() {
   cameraCanvas.height = h;
   const ctx = cameraCanvas.getContext("2d");
   if (!ctx) return;
+  // Mirror horizontally to match the live preview (CSS scaleX(-1) on the video).
+  ctx.save();
+  ctx.translate(w, 0);
+  ctx.scale(-1, 1);
   ctx.drawImage(v, 0, 0, w, h);
+  ctx.restore();
 
   cameraCanvas.hidden = false;
   cameraVideo.hidden = true;
@@ -387,6 +392,38 @@ window.addEventListener("resize", () => {
     refreshPhotos().catch(console.error);
   }, 200);
 });
+
+/** QR mode toggle — shows the upload QR overlay and hides the camera FAB. */
+const qrToggle = document.getElementById("qrToggle");
+const qrOverlay = document.getElementById("qrOverlay");
+const QR_KEY = "photoapp:qr-mode";
+
+function setQrMode(on) {
+  document.body.classList.toggle("qr-mode", on);
+  if (qrOverlay) qrOverlay.hidden = !on;
+  if (qrToggle) qrToggle.checked = on;
+  try {
+    localStorage.setItem(QR_KEY, on ? "1" : "0");
+  } catch {}
+}
+
+setQrMode(localStorage.getItem(QR_KEY) === "1");
+qrToggle?.addEventListener("change", (e) => setQrMode(e.target.checked));
+
+/** Live updates via Server-Sent Events. EventSource auto-reconnects. */
+function startEventStream() {
+  if (typeof EventSource === "undefined") return;
+  const es = new EventSource("/api/events");
+  const onChange = () => {
+    refreshPhotos().catch(console.error);
+  };
+  es.addEventListener("created", onChange);
+  es.addEventListener("deleted", onChange);
+  es.onerror = () => {
+    /* browser auto-reconnects */
+  };
+}
+startEventStream();
 
 refreshPhotos().catch((e) => {
   console.error(e);

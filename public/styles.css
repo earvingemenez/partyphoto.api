@@ -32,12 +32,24 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
   background-color: var(--bg);
-  background-image: url("/assets/wall-background.png");
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  background-image: url("/assets/rsvp-desktop.webp"),
+    linear-gradient(180deg, #b8ecff 0%, #fff 100%);
+  /* cover = scales to fill the viewport in both dimensions while preserving
+     the image's aspect ratio (no distortion). Some edges may be cropped. */
+  background-size: cover, cover;
+  background-position: center center, center center;
+  background-repeat: no-repeat, no-repeat;
   /* scroll avoids iOS glitches with fixed backgrounds */
-  background-attachment: scroll;
+  background-attachment: scroll, scroll;
+}
+
+/* Mobile / narrow viewports get the portrait-cropped artwork. */
+@media (max-width: 768px) {
+  body {
+    background-image: url("/assets/rsvp-mobile.webp"),
+      linear-gradient(180deg, #b8ecff 0%, #fff 100%);
+    background-size: cover, cover;
+  }
 }
 
 .app {
@@ -59,12 +71,11 @@ body {
   top: 50%;
   border: none;
   padding: 0;
-  border-radius: var(--radius-squircle);
-  overflow: hidden;
-  box-shadow: var(--shadow-soft);
+  /* No clipping/border-radius here — the rotor is the visible card and
+     rotates as a whole so the rounded corners turn with the image. */
+  background: transparent;
   cursor: pointer;
   touch-action: manipulation;
-  background: rgba(241, 245, 249, 0.92);
   -webkit-tap-highlight-color: transparent;
   --tile-pop-duration: 0.95s;
   animation-name: tile-pop;
@@ -76,6 +87,10 @@ body {
 }
 
 .tile:focus-visible {
+  outline: none;
+}
+
+.tile:focus-visible .tile__rotor {
   outline: 3px solid #3b82f6;
   outline-offset: 4px;
 }
@@ -84,8 +99,10 @@ body {
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: inherit;
+  border-radius: var(--radius-squircle);
   overflow: hidden;
+  background: rgba(241, 245, 249, 0.92);
+  box-shadow: var(--shadow-soft);
   transform-origin: center center;
   will-change: transform;
 }
@@ -255,6 +272,13 @@ body {
   object-fit: cover;
 }
 
+/* Mirror the live preview so it behaves like a selfie cam.
+   The canvas captures the mirrored frame at draw time (see app.js),
+   so its pixels are already flipped — no CSS transform needed there. */
+.camera__video {
+  transform: scaleX(-1);
+}
+
 .camera__actions {
   display: flex;
   flex-wrap: wrap;
@@ -363,4 +387,107 @@ body {
   .fab {
     --fab-size: clamp(4rem, 22vw, 5.75rem);
   }
+}
+
+/* ---- QR mode toggle (small pill switch, top-right) ---- */
+.qr-toggle {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: calc(env(safe-area-inset-right) + 12px);
+  z-index: 150;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem 0.35rem 0.45rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  box-shadow: var(--shadow-soft);
+  font: 600 0.8rem/1 system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.qr-toggle__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.qr-toggle__track {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: background 0.18s ease;
+}
+
+.qr-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: transform 0.18s ease;
+}
+
+.qr-toggle__input:checked + .qr-toggle__track {
+  background: #f97316; /* match QR text accent */
+}
+
+.qr-toggle__input:checked + .qr-toggle__track .qr-toggle__thumb {
+  transform: translateX(14px);
+}
+
+.qr-toggle__input:focus-visible + .qr-toggle__track {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ---- QR overlay (above background + wall, below modals + toggle) ---- */
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  /* High enough to sit above any photo tile (tiles use 10 + N from JS) */
+  z-index: 140;
+  pointer-events: none; /* don't block the wall behind it */
+  background: transparent;
+}
+
+.qr-overlay[hidden] {
+  display: none;
+}
+
+.qr-overlay__img {
+  position: absolute;
+  top: 10%;
+  left: 12%;
+  width: clamp(180px, 26vw, 360px);
+  height: auto;
+  filter: drop-shadow(0 8px 20px rgba(15, 23, 42, 0.15));
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .qr-overlay__img {
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(220px, 70vw, 360px);
+  }
+
+  .qr-toggle {
+    display: none;
+  }
+}
+
+/* When QR mode is active, hide the camera FAB. */
+body.qr-mode .fab {
+  display: none;
 }

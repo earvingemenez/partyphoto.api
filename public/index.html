@@ -7,10 +7,28 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="theme-color" content="#ffffff" />
-    <title>Party Photos</title>
+    <title>Loic: Let's have fun!</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <!-- QR mode toggle (top right) -->
+    <label class="qr-toggle" for="qrToggle" title="Show QR upload code">
+      <input type="checkbox" id="qrToggle" class="qr-toggle__input" />
+      <span class="qr-toggle__track" aria-hidden="true">
+        <span class="qr-toggle__thumb"></span>
+      </span>
+      <span class="qr-toggle__label">QR</span>
+    </label>
+
+    <!-- QR upload overlay (above background, below modals) -->
+    <div id="qrOverlay" class="qr-overlay" hidden>
+      <img
+        class="qr-overlay__img"
+        src="/assets/qr-upload.webp"
+        alt="Scan QR to upload photos"
+      />
+    </div>
+
     <main class="app" aria-label="Photo wall">
       <div id="wall" class="wall"></div>
 
