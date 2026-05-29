@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 
@@ -26,6 +26,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_BYTES = 12 * 1024 * 1024
 WEBP_QUALITY = int(os.environ.get("WEBP_QUALITY", "82"))
+JPEG_QUALITY = int(os.environ.get("JPEG_QUALITY", "90"))
 ALLOWED_RE = re.compile(r"\.(jpe?g|png|webp|gif|heic|heif|avif|tiff?)$", re.IGNORECASE)
 
 
@@ -100,6 +101,32 @@ async def create_photo(photo: UploadFile = File(...)):
             "url": f"/uploads/{filename}",
             "createdAt": int(created * 1000),
         },
+    )
+
+
+@app.get("/api/photos/{photo_id}/download")
+def download_photo(photo_id: str):
+    if "/" in photo_id or ".." in photo_id or photo_id != os.path.basename(photo_id):
+        raise HTTPException(status_code=400, detail="Invalid id")
+    source = UPLOAD_DIR / photo_id
+    if not source.exists():
+        raise HTTPException(status_code=404, detail="Not found")
+
+    buf = io.BytesIO()
+    try:
+        with Image.open(source) as img:
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            img.save(buf, format="JPEG", quality=JPEG_QUALITY, optimize=True)
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(status_code=500, detail="Could not convert image") from exc
+
+    buf.seek(0)
+    jpeg_name = f"{source.stem}.jpg"
+    return StreamingResponse(
+        buf,
+        media_type="image/jpeg",
+        headers={"Content-Disposition": f'attachment; filename="{jpeg_name}"'},
     )
 
 
